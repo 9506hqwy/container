@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: host-keypair
+data:
+  ssh-privatekey: ${HOST_PRIVATE_KEY}
+  ssh-publickey: ${HOST_PUBLIC_KEY}
+type: kubernetes.io/ssh-auth
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user-client-keypair
+data:
+  ssh-privatekey: ${USER_PRIVATE_KEY}
+type: kubernetes.io/ssh-auth
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ssh
+spec:
+  containers:
+    - name: server
+      image: ssh
+      ports:
+        - containerPort: 22
+          hostPort: 20022
+          protocol: tcp
+      volumeMounts:
+        - name: host-keypair
+          mountPath: /etc/ssh/ssh_host_ed25519_key
+          subPath: ssh-privatekey
+        - name: host-keypair
+          mountPath: /etc/ssh/ssh_host_ed25519_key.pub
+          subPath: ssh-publickey
+        - name: user-client-keypair
+          mountPath: /home/${SSH_USER_NAME}/.ssh/authorized_keys
+          subPath: ssh-privatekey
+  volumes:
+    - name: host-keypair
+      secret:
+        secretName: host-keypair
+    - name: user-client-keypair
+      secret:
+        secretName: user-client-keypair
