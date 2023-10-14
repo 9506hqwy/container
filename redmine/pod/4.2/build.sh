@@ -29,6 +29,9 @@ case "$1" in
         export DB_PASSWORD=$(echo -n $POSTGRES_PASSWORD | base64 -w 0)
         ;;
 
+    sqlite)
+        ;;
+
     *)
         echo 'Specify database [postgres/mysql]'
         exit 1
