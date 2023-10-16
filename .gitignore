@@ -1,4 +1,4 @@
-ssh-server/*/dev_ed25519_key
-ssh-server/*/dev_ed25519_key.pub
-ssh-server/*/ssh_host_ed25519_key
-ssh-server/*/ssh_host_ed25519_key.pub
+ssh-server/**/dev_ed25519_key
+ssh-server/**/dev_ed25519_key.pub
+ssh-server/**/ssh_host_ed25519_key
+ssh-server/**/ssh_host_ed25519_key.pub
