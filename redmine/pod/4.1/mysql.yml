@@ -1,0 +1,127 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redmine41-db-conf
+data:
+  configuration: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_general_ci
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redmine41-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redmine41-conf
+data:
+  configuration: |
+    default:
+      email_delivery:
+    production:
+      database_cipher_key: ${DB_CIPHER_KEY}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: redmine41
+spec:
+  containers:
+    - name: web
+      image: redmine:4.1-suburl
+      env:
+        - name: REDMINE_DB_MYSQL
+          value: 127.0.0.1
+        - name: REDMINE_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: redmine41-db-cred
+              key: username
+        - name: REDMINE_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redmine41-db-cred
+              key: password
+        - name: REDMINE_DB_ENCODING
+          value: utf8mb4
+        - name: PASSENGER_DISABLE_SECURITY_UPDATE_CHECK
+          value: true
+        - name: REDMINE_SUB_URL
+          value: /redmine
+        - name: MEMCACHED_SERVER
+          value: 127.0.0.1
+      ports:
+        - containerPort: 3000
+          hostPort: 3000
+          protocol: tcp
+      volumeMounts:
+        - name: redmine-config
+          mountPath: /usr/src/redmine/config/configuration.yml
+          subPath: configuration
+        - name: redmine-files
+          mountPath: /usr/src/redmine/files:Z
+        - name: redmine-log
+          mountPath: /usr/src/redmine/log:Z
+        - name: redmine-plugins
+          mountPath: /usr/src/redmine/plugins:Z
+      workingDir: /usr/src/redmine
+
+    - name: db
+      image: mysql:5.7
+      env:
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: redmine41-db-cred
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redmine41-db-cred
+              key: password
+        - name: MYSQL_DATABASE
+          value: redmine
+        - name: MYSQL_RANDOM_ROOT_PASSWORD
+          value: yes
+      volumeMounts:
+        - name: redmine-db
+          mountPath: /var/lib/mysql:Z
+        - name: redmine-db-conf
+          mountPath: /etc/mysql/conf.d/encoding.cnf
+          subPath: configuration
+
+    - name: cache
+      image: memcached:1.6-alpine
+      command:
+        - memcached
+
+  volumes:
+    - name: redmine-config
+      configMap:
+        name: redmine41-conf
+
+    - name: redmine-db
+      hostPath:
+        path: ${HOST_PATH}/db
+
+    - name: redmine-db-conf
+      configMap:
+        name: redmine41-db-conf
+
+    - name: redmine-files
+      hostPath:
+        path: ${HOST_PATH}/files
+
+    - name: redmine-log
+      hostPath:
+        path: ${HOST_PATH}/log
+
+    - name: redmine-plugins
+      hostPath:
+        path: ${HOST_PATH}/plugins

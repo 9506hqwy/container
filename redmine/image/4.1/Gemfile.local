@@ -1,0 +1,6 @@
+# For Memcached
+gem "dalli"
+
+# For redmine_common_mark plugin
+gem "commonmarker", ">= 0.22.0"
+gem "gemoji"
