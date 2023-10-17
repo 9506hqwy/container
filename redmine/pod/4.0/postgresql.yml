@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redmine40-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redmine40-conf
+data:
+  configuration: |
+    default:
+      email_delivery:
+    production:
+      database_cipher_key: ${DB_CIPHER_KEY}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: redmine40
+spec:
+  containers:
+    - name: web
+      image: redmine:4.0-suburl
+      env:
+        - name: REDMINE_DB_POSTGRES
+          value: 127.0.0.1
+        - name: REDMINE_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: redmine40-db-cred
+              key: username
+        - name: REDMINE_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redmine40-db-cred
+              key: password
+        - name: PASSENGER_DISABLE_SECURITY_UPDATE_CHECK
+          value: true
+        - name: REDMINE_SUB_URL
+          value: /redmine
+        - name: MEMCACHED_SERVER
+          value: 127.0.0.1
+      ports:
+        - containerPort: 3000
+          hostPort: 3000
+          protocol: tcp
+      volumeMounts:
+        - name: redmine-config
+          mountPath: /usr/src/redmine/config/configuration.yml
+          subPath: configuration
+        - name: redmine-files
+          mountPath: /usr/src/redmine/files:Z
+        - name: redmine-log
+          mountPath: /usr/src/redmine/log:Z
+        - name: redmine-plugins
+          mountPath: /usr/src/redmine/plugins:Z
+      workingDir: /usr/src/redmine
+
+    - name: db
+      image: postgres:12-alpine
+      env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: redmine40-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redmine40-db-cred
+              key: password
+      volumeMounts:
+        - name: redmine-db
+          mountPath: /var/lib/postgresql/data:Z
+
+    - name: cache
+      image: memcached:1.6-alpine
+      command:
+        - memcached
+
+  volumes:
+    - name: redmine-config
+      configMap:
+        name: redmine40-conf
+
+    - name: redmine-db
+      hostPath:
+        path: ${HOST_PATH}/db
+
+    - name: redmine-files
+      hostPath:
+        path: ${HOST_PATH}/files
+
+    - name: redmine-log
+      hostPath:
+        path: ${HOST_PATH}/log
+
+    - name: redmine-plugins
+      hostPath:
+        path: ${HOST_PATH}/plugins
