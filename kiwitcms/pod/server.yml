@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kiwitcms-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: kiwi
+spec:
+  containers:
+    - name: web
+      image: kiwitcms/kiwi:latest
+      env:
+        - name: KIWI_DB_ENGINE
+          value: django.db.backends.postgresql
+        - name: KIWI_DB_HOST
+          value: 127.0.0.1
+        - name: KIWI_DB_PORT
+          value: 5432
+        - name: KIWI_DB_NAME
+          value: wiki
+        - name: KIWI_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: kiwitcms-db-cred
+              key: username
+        - name: KIWI_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kiwitcms-db-cred
+              key: password
+      ports:
+        - containerPort: 8443
+          hostPort: 8443
+          protocol: tcp
+      # https://github.com/containers/podman/issues/17583
+      #volumeMounts:
+      #  - name: kiwitcms-files
+      #    mountPath: /Kiwi/uploads:Z
+
+    - name: db
+      image: postgres:12-alpine
+      env:
+        - name: POSTGRES_DB
+          value: wiki
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: kiwitcms-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kiwitcms-db-cred
+              key: password
+      volumeMounts:
+        - name: kiwitcms-db
+          mountPath: /var/lib/postgresql/data:Z
+
+  volumes:
+    - name: kiwitcms-db
+      hostPath:
+        path: ${HOST_PATH}/db
+
+    - name: kiwitcms-files
+      hostPath:
+        path: ${HOST_PATH}/files
