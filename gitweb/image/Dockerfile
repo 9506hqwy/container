@@ -3,13 +3,13 @@ FROM alpine:3.18
 RUN set -eux; \
     \
     apk add --no-cache --no-interactive \
-        fcgiwrap \
-        git-daemon \
-        git-gitweb \
-        highlight \
-        nginx \
-        perl-cgi \
-        spawn-fcgi \
+        fcgiwrap=1.1.0-r7 \
+        git-daemon=2.40.1-r0 \
+        git-gitweb=2.40.1-r0 \
+        highlight=4.5-r2 \
+        nginx=1.24.0-r7 \
+        perl-cgi=4.57-r0 \
+        spawn-fcgi=1.6.5-r2 \
         ; \
     \
     mkdir /mnt/repos; \

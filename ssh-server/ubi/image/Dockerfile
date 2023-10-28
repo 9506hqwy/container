@@ -1,4 +1,4 @@
-FROM redhat/ubi8
+FROM redhat/ubi8:8.8-1067.1698056881
 
 ARG SSH_USER=dev
 
@@ -7,6 +7,7 @@ RUN set -eux; \
     SSH_USER_CONFIG=/home/${SSH_USER}/.ssh; \
     \
     dnf install -y openssh-server; \
+    dnf clean all; \
     \
     sed "${SSHD_CONFIG}" -i -e 's%^\(HostKey /etc/ssh/ssh_host_rsa_key\)%#\1%'; \
     sed "${SSHD_CONFIG}" -i -e 's%^\(HostKey /etc/ssh/ssh_host_ecdsa_key\)%#\1%'; \
@@ -20,11 +21,11 @@ RUN set -eux; \
     sed '/etc/pam.d/sshd' -i -e 's%session\s\+required\s\+pam_loginuid.so%session optional pam_loginuid.so%'; \
     touch /var/log/lastlog; \
     \
-    PASSWORD=$(cat /dev/random | fold -w 12 | base64 | head -n 1); \
+    PASSWORD=$(fold -w 12 < /dev/random | base64 | head -n 1); \
     echo "root:${PASSWORD}" | chpasswd; \
     \
     useradd -m ${SSH_USER}; \
-    PASSWORD=$(cat /dev/random | fold -w 12 | base64 | head -n 1); \
+    PASSWORD=$(fold -w 12 < /dev/random | base64 | head -n 1); \
     echo "${SSH_USER}:${PASSWORD}" | chpasswd; \
     \
     mkdir ${SSH_USER_CONFIG}; \

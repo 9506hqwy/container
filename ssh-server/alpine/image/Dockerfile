@@ -6,7 +6,7 @@ RUN set -eux; \
     SSHD_CONFIG=/etc/ssh/sshd_config; \
     SSH_USER_CONFIG=/home/${SSH_USER}/.ssh; \
     \
-    apk add --no-cache --no-interactive openssh-server; \
+    apk add --no-cache --no-interactive openssh-server=9.3_p2-r0; \
     \
     sed -i -e 's%^#\(HostKey /etc/ssh/ssh_host_ed25519_key\)%\1%' "${SSHD_CONFIG}"; \
     sed -i -e 's%^#\(StrictModes yes\)%\1%' "${SSHD_CONFIG}"; \
@@ -14,11 +14,11 @@ RUN set -eux; \
     sed -i -e 's%^#\(PasswordAuthentication\) yes%\1 no%' "${SSHD_CONFIG}"; \
     sed -i -e 's%^#\(KbdInteractiveAuthentication\) yes%\1 no%' "${SSHD_CONFIG}"; \
     \
-    PASSWORD=$(cat /dev/random | fold -w 12 | base64 | head -n 1); \
+    PASSWORD=$(fold -w 12 < /dev/random | base64 | head -n 1); \
     echo "root:${PASSWORD}" | chpasswd; \
     \
     adduser -D ${SSH_USER}; \
-    PASSWORD=$(cat /dev/random | fold -w 12 | base64 | head -n 1); \
+    PASSWORD=$(fold -w 12 < /dev/random | base64 | head -n 1); \
     echo "${SSH_USER}:${PASSWORD}" | chpasswd; \
     \
     mkdir ${SSH_USER_CONFIG}; \
