@@ -6,7 +6,7 @@ RUN set -eux; \
     SSHD_CONFIG=/etc/ssh/sshd_config; \
     SSH_USER_CONFIG=/home/${SSH_USER}/.ssh; \
     \
-    dnf install -y openssh-server; \
+    dnf install --disableplugin=subscription-manager -y openssh-server; \
     dnf clean all; \
     \
     sed "${SSHD_CONFIG}" -i -e 's%^\(HostKey /etc/ssh/ssh_host_rsa_key\)%#\1%'; \
