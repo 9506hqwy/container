@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: codimd-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: codimd-web-conf
+data:
+  db_url: ${CMD_DB_URL}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: codimd
+spec:
+  containers:
+    - name: web
+      image: hackmdio/hackmd:2.4.2-cjk
+      env:
+        - name: CMD_USECDN
+          value: false
+        - name: CMD_AUTO_VERSION_CHECK
+          value: false
+        - name: CMD_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: codimd-web-conf
+              key: db_url
+        - name: CMD_ALLOW_ANONYMOUS
+          value: false
+        - name: CMD_DEFAULT_PERMISSION
+          value: limited
+        - name: CMD_ALLOW_EMAIL_REGISTER
+          value: false
+      ports:
+        - containerPort: 3000
+          hostPort: 3000
+          protocol: tcp
+      # https://github.com/containers/podman/issues/17583
+      #volumeMounts:
+      #  - name: codimd-files
+      #    mountPath: /home/hackmd/app/public/uploads:Z
+
+    - name: db
+      image: postgres:12-alpine
+      env:
+        - name: POSTGRES_DB
+          value: codimd
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: codimd-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: codimd-db-cred
+              key: password
+      volumeMounts:
+        - name: codimd-db
+          mountPath: /var/lib/postgresql/data:Z
+
+  volumes:
+    - name: codimd-db
+      hostPath:
+        path: ${HOST_PATH}/db
+
+    - name: codimd-files
+      hostPath:
+        path: ${HOST_PATH}/files
