@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: concourse-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: concourse-session-key
+data:
+  privatekey: ${SESSION_KEY}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: concourse-tsa-keypair
+data:
+  ssh-privatekey: ${TSA_PRIVATE_KEY}
+  ssh-publickey: ${TSA_PUBLIC_KEY}
+type: kubernetes.io/ssh-auth
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: concourse-worker-keypair
+data:
+  ssh-privatekey: ${WORKER_PRIVATE_KEY}
+  ssh-publickey: ${WORKER_PUBLIC_KEY}
+type: kubernetes.io/ssh-auth
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: concourse-web-conf
+data:
+  external-url: ${EXTERNAL_URL}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: concourse-web-cred
+data:
+  admin: ${ADMIN}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: concourse
+spec:
+  containers:
+    - name: web
+      image: concourse/concourse:7.11
+      env:
+        - name: CONCOURSE_POSTGRES_HOST
+          value: 127.0.0.1
+        - name: CONCOURSE_POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: concourse-db-cred
+              key: username
+        - name: CONCOURSE_POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: concourse-db-cred
+              key: password
+        - name: CONCOURSE_POSTGRES_DATABASE
+          value: concourse
+        - name: CONCOURSE_EXTERNAL_URL
+          valueFrom:
+            configMapKeyRef:
+              name: concourse-web-conf
+              key: external-url
+        - name: CONCOURSE_ADD_LOCAL_USER
+          valueFrom:
+            secretKeyRef:
+              name: concourse-web-cred
+              key: admin
+        - name: CONCOURSE_MAIN_TEAM_LOCAL_USER
+          value: admin
+      ports:
+        - containerPort: 8080
+          hostPort: 8080
+          protocol: tcp
+      volumeMounts:
+        - name: session-key
+          mountPath: /concourse-keys/session_signing_key
+          subPath: privatekey
+        - name: tsa-keypair
+          mountPath: /concourse-keys/tsa_host_key
+          subPath: ssh-privatekey
+        - name: tsa-keypair
+          mountPath: /concourse-keys/tsa_host_key.pub
+          subPath: ssh-publickey
+        - name: worker-keypair
+          mountPath: /concourse-keys/authorized_worker_keys
+          subPath: ssh-publickey
+      args:
+        - web
+
+    # need to enable `ip_tables` kernel module
+    - name: worker
+      image: concourse/concourse:7.11
+      env:
+        - name: CONCOURSE_TSA_HOST
+          value: 127.0.0.1:2222
+        # for cgroupv2
+        - name: CONCOURSE_RUNTIME
+          value: containerd
+        - name: CONCOURSE_CONTAINERD_DNS_PROXY_ENABLE
+          value: false
+      volumeMounts:
+        - name: worker-keypair
+          mountPath: /concourse-keys/worker_key
+          subPath: ssh-privatekey
+        - name: worker-keypair
+          mountPath: /concourse-keys/worker_key.pub
+          subPath: ssh-publickey
+        - name: tsa-keypair
+          mountPath: /concourse-keys/tsa_host_key.pub
+          subPath: ssh-publickey
+      securityContext:
+        privileged: true
+      args:
+        - worker
+
+    - name: db
+      image: postgres:12-alpine
+      env:
+        - name: POSTGRES_DB
+          value: concourse
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: concourse-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: concourse-db-cred
+              key: password
+      volumeMounts:
+        - name: concourse-db
+          mountPath: /var/lib/postgresql/data:Z
+
+  volumes:
+    - name: session-key
+      secret:
+        secretName: concourse-session-key
+
+    - name: tsa-keypair
+      secret:
+        secretName: concourse-tsa-keypair
+
+    - name: worker-keypair
+      secret:
+        secretName: concourse-worker-keypair
+
+    - name: concourse-db
+      hostPath:
+        path: ${HOST_PATH}/db
