@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: diagrams
+spec:
+  containers:
+    - name: server
+      image: drawio:22.1.0-ex
+      env:
+        - name: BASE_URL
+          value: /draw
+        - name: PORT
+          value: 28081
+        - name: DRAWIO_VIEWER_URL
+          value: js/viewer.min.js
+        - name: DRAWIO_LIGHTBOX_URL
+          value: js/viewer.min.js
+      ports:
+        - containerPort: 28081
+          hostPort: 28081
+          protocol: tcp
