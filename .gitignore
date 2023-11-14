@@ -4,6 +4,9 @@ concourse/**/tsa_host_key.pub
 concourse/**/worker_key
 concourse/**/worker_key.pub
 
+growi/**/password_seed
+growi/**/secret_token
+
 ssh-server/**/dev_ed25519_key
 ssh-server/**/dev_ed25519_key.pub
 ssh-server/**/ssh_host_ed25519_key
