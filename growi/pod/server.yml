@@ -40,7 +40,6 @@ data:
       }
 
       location /_/draw/ {
-        # TODO: window.**** に相対パスを設定する。
         proxy_pass http://127.0.0.1:8082/_/draw/;
       }
 
@@ -48,14 +47,30 @@ data:
         # apps/app/src/components/Script/DrawioViewerScript.tsx:44
         # new URL('/js/viewer.min.js', rendererConfig.drawioUri)
         # URL の引数が絶対パスのため PATH が無視されるので draw.io に変更する。
-        proxy_pass http://127.0.0.1:8082/_/draw/js/viewer-static.min.js;
+        proxy_pass http://127.0.0.1/_/www/viewer-injection.js;
       }
 
       location /_/export/ {
         rewrite /_/export/(.*) /$1 break;
         proxy_pass http://127.0.0.1:8000/;
       }
+
+      location /_/www/ {
+        rewrite /_/www/(.*) /$1 break;
+        root /var/www;
+      }
     }
+  drawio-viewer-inject: |
+    window.PROXY_URL = "/_/draw/proxy";
+    window.STYLE_PATH = "/_/draw/styles";
+    window.SHAPES_PATH = "/_/draw/shapes";
+    window.STENCIL_PATH = "/_/draw/stencils";
+    window.GRAPH_IMAGE_PATH = "/_/draw/img";
+    window.mxImageBasePath = "/_/draw/mxgraph/images";
+
+    let block = document.createElement('script');
+    block.src = '/_/draw/js/viewer-static.min.js';
+    document.head.appendChild(block);
 ---
 apiVersion: v1
 kind: Secret
@@ -81,6 +96,9 @@ spec:
         - name: growi-web-conf
           mountPath: /etc/nginx/conf.d/default.conf
           subPath: nginx-conf
+        - name: growi-web-conf
+          mountPath: /var/www/viewer-injection.js
+          subPath: drawio-viewer-inject
 
     - name: wiki
       image: weseek/growi:6.2.2
