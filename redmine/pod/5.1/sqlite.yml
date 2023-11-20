@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redmine51-conf
+data:
+  configuration: |
+    default:
+      email_delivery:
+    production:
+      database_cipher_key: ${DB_CIPHER_KEY}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: redmine51
+spec:
+  containers:
+    - name: web
+      image: redmine:5.1-suburl
+      env:
+        - name: REDMINE_SUB_URL
+          value: /redmine
+        - name: MEMCACHED_SERVER
+          value: 127.0.0.1
+      ports:
+        - containerPort: 3000
+          hostPort: 3000
+          protocol: tcp
+      volumeMounts:
+        - name: redmine-config
+          mountPath: /usr/src/redmine/config/configuration.yml
+          subPath: configuration
+        - name: redmine-db
+          mountPath: /usr/src/redmine/sqlite:Z
+        - name: redmine-files
+          mountPath: /usr/src/redmine/files:Z
+        - name: redmine-plugins
+          mountPath: /usr/src/redmine/plugins:Z
+      workingDir: /usr/src/redmine
+
+    - name: cache
+      image: memcached:1.6-alpine
+      command:
+        - memcached
+
+  volumes:
+    - name: redmine-config
+      configMap:
+        name: redmine51-conf
+
+    - name: redmine-db
+      hostPath:
+        path: ${HOST_PATH}/db
+
+    - name: redmine-files
+      hostPath:
+        path: ${HOST_PATH}/files
+
+    - name: redmine-plugins
+      hostPath:
+        path: ${HOST_PATH}/plugins
