@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sonarqube-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: sonarqube
+spec:
+  # https://docs.sonarsource.com/sonarqube/9.8/setup-and-upgrade/configure-and-operate-a-server/environment-variables/#elasticsearch
+  # Error: sysctl 'vm.max_map_count' is not allowed
+  #securityContext:
+  #  sysctls:
+  #    - name: vm.max_map_count
+  #      value: 262144
+  containers:
+    - name: web
+      image: sonarqube:9.9.5-community
+      env:
+        - name: SONAR_JDBC_URL
+          value: jdbc:postgresql://127.0.0.1/sonarqube
+        - name: SONAR_JDBC_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sonarqube-db-cred
+              key: username
+        - name: SONAR_JDBC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sonarqube-db-cred
+              key: password
+      ports:
+        - containerPort: 9000
+          hostPort: 9000
+          protocol: tcp
+      # https://github.com/containers/podman/issues/17583
+      #volumeMounts:
+      #  - name: sonarqube-data
+      #    mountPath: /opt/sonarqube/data:Z
+
+    - name: db
+      image: postgres:15-alpine
+      env:
+        - name: POSTGRES_DB
+          value: sonarqube
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: sonarqube-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sonarqube-db-cred
+              key: password
+      volumeMounts:
+        - name: sonarqube-db
+          mountPath: /var/lib/postgresql/data:Z
+
+  volumes:
+    - name: sonarqube-data
+      hostPath:
+        path: ${HOST_PATH}/data
+
+    - name: sonarqube-db
+      hostPath:
+        path: ${HOST_PATH}/db
