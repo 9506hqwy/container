@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: n8n-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: n8n
+spec:
+  containers:
+    - name: web
+      image: n8nio/n8n:1.48.1
+      env:
+        - name: N8N_SECURE_COOKIE
+          value: false
+        # https://docs.n8n.io/hosting/configuration/supported-databases-settings/
+        - name: DB_TYPE
+          value: postgresdb
+        - name: DB_POSTGRESDB_DATABASE
+          value: n8n
+        - name: DB_POSTGRESDB_HOST
+          value: 127.0.0.1
+        - name: DB_POSTGRESDB_PORT
+          value: 5432
+        - name: DB_POSTGRESDB_SCHEMA
+          value: n8n
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-cred
+              key: username
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-cred
+              key: password
+        # https://docs.n8n.io/hosting/configuration/configuration-examples/isolation/
+        - name: N8N_DIAGNOSTICS_ENABLED
+          value: false
+        - name: N8N_VERSION_NOTIFICATIONS_ENABLED
+          value: false
+        - name: N8N_TEMPLATES_ENABLED
+          value: false
+        - name: EXTERNAL_FRONTEND_HOOKS_URLS
+          value:
+        - name: N8N_DIAGNOSTICS_CONFIG_FRONTEND
+          value:
+        - name: N8N_DIAGNOSTICS_CONFIG_BACKEND
+          value:
+        # https://docs.n8n.io/hosting/configuration/configuration-examples/time-zone/
+        - name: GENERIC_TIMEZONE
+          value: Asia/Tokyo
+      ports:
+        - containerPort: 5678
+          hostPort: 5678
+          protocol: tcp
+      volumeMounts:
+        - name: n8n-data
+          mountPath: /home/node/.n8n:Z
+
+    - name: db
+      image: postgres:15-alpine
+      env:
+        - name: POSTGRES_DB
+          value: n8n
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-cred
+              key: password
+      volumeMounts:
+        - name: n8n-db
+          mountPath: /var/lib/postgresql/data:Z
+
+  volumes:
+    - name: n8n-data
+      hostPath:
+        path: ${HOST_PATH}/data
+
+    - name: n8n-db
+      hostPath:
+        path: ${HOST_PATH}/db
