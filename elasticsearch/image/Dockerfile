@@ -1,4 +1,4 @@
-FROM elasticsearch:8.11.0
+FROM elasticsearch:8.15.0
 
 RUN set -eux; \
     \

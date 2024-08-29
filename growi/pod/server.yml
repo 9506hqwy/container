@@ -39,15 +39,18 @@ data:
         proxy_pass http://127.0.0.1:8081/_/uml/;
       }
 
-      location /_/draw/ {
-        proxy_pass http://127.0.0.1:8082/_/draw/;
-      }
-
-      location /js/viewer.min.js {
+      location /_/draw/js/viewer.min.js {
         # apps/app/src/components/Script/DrawioViewerScript.tsx:44
         # new URL('/js/viewer.min.js', rendererConfig.drawioUri)
         # URL の引数が絶対パスのため PATH が無視されるので draw.io に変更する。
+        # 上記の問題は修正されたが windows オブジェクトに PATH を設定するため、
+        # injection は残す。
+        # https://github.com/weseek/growi/pull/8878
         proxy_pass http://127.0.0.1/_/www/viewer-injection.js;
+      }
+
+      location /_/draw/ {
+        proxy_pass http://127.0.0.1:8082/_/draw/;
       }
 
       location /_/export/ {
@@ -87,7 +90,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: nginx:1.25.3-alpine3.18-slim
+      image: nginx:1.27.1-alpine3.20-slim
       ports:
         - containerPort: 80
           hostPort: 23000
@@ -101,7 +104,7 @@ spec:
           subPath: drawio-viewer-inject
 
     - name: wiki
-      image: weseek/growi:6.2.2
+      image: weseek/growi:7.0.17
       env:
         - name: APP_SITE_URL
           valueFrom:
@@ -145,7 +148,7 @@ spec:
           mountPath: /data:Z
 
     - name: db
-      image: mongo:7.0.2-jammy
+      image: docker.io/mongo:7.0.14-jammy
       volumeMounts:
         - name: growi-db
           mountPath: /data/db:Z
@@ -153,7 +156,7 @@ spec:
           mountPath: /data/configdb:Z
 
     - name: uml
-      image: plantuml-server:jetty-v1.2023.12-ex
+      image: plantuml-server:jetty-v1.2024.6-ex
       env:
         - name: BASE_URL
           value: /_/uml/
@@ -163,7 +166,7 @@ spec:
         - --module=http-forwarded
 
     - name: draw
-      image: drawio:22.1.0-ex
+      image: drawio:24.7.8-ex
       env:
         - name: BASE_URL
           value: /_/draw/
@@ -205,7 +208,7 @@ spec:
               key: drawio-base-url
 
     - name: search
-      image: elasticsearch:8.11.0-ex
+      image: elasticsearch:8.15.0-ex
       env:
         - name: discovery.type
           value: single-node

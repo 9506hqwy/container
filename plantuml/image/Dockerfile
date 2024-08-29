@@ -1,4 +1,4 @@
-FROM plantuml/plantuml-server:jetty-v1.2023.12
+FROM plantuml/plantuml-server:jetty-v1.2024.6
 
 ARG PORT=8080
 

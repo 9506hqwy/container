@@ -1,4 +1,4 @@
-FROM jgraph/drawio:22.1.0
+FROM jgraph/drawio:24.7.8
 
 ARG BASE_URL=/
 ARG PORT=8080
