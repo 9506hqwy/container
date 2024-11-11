@@ -13,7 +13,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: kiwitcms/kiwi:latest
+      image: docker.io/kiwitcms/kiwi:latest
       env:
         - name: KIWI_DB_ENGINE
           value: django.db.backends.postgresql
@@ -43,7 +43,7 @@ spec:
       #    mountPath: /Kiwi/uploads:Z
 
     - name: db
-      image: postgres:12-alpine
+      image: docker.io/postgres:12-alpine
       env:
         - name: POSTGRES_DB
           value: wiki

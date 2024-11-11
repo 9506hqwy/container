@@ -22,7 +22,7 @@ metadata:
 spec:
   containers:
     - name: server
-      image: ssh:ubi
+      image: localhost/ssh:ubi
       ports:
         - containerPort: 22
           hostPort: 20022

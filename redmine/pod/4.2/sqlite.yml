@@ -16,7 +16,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: redmine:4.2-suburl
+      image: localhost/redmine:4.2-suburl
       env:
         - name: PASSENGER_DISABLE_SECURITY_UPDATE_CHECK
           value: true
@@ -43,7 +43,7 @@ spec:
       workingDir: /usr/src/redmine
 
     - name: cache
-      image: memcached:1.6-alpine
+      image: docker.io/memcached:1.6-alpine
       command:
         - memcached
 

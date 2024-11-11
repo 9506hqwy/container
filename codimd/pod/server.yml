@@ -20,7 +20,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: hackmdio/hackmd:2.4.2-cjk
+      image: docker.io/hackmdio/hackmd:2.4.2-cjk
       env:
         - name: CMD_USECDN
           value: false
@@ -47,7 +47,7 @@ spec:
       #    mountPath: /home/hackmd/app/public/uploads:Z
 
     - name: db
-      image: postgres:12-alpine
+      image: docker.io/postgres:12-alpine
       env:
         - name: POSTGRES_DB
           value: codimd

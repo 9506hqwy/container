@@ -19,7 +19,7 @@ spec:
   #      value: 262144
   containers:
     - name: web
-      image: sonarqube:9.9.5-community
+      image: docker.io/sonarqube:9.9.5-community
       env:
         - name: SONAR_JDBC_URL
           value: jdbc:postgresql://127.0.0.1/sonarqube
@@ -43,7 +43,7 @@ spec:
       #    mountPath: /opt/sonarqube/data:Z
 
     - name: db
-      image: postgres:15-alpine
+      image: docker.io/postgres:15-alpine
       env:
         - name: POSTGRES_DB
           value: sonarqube

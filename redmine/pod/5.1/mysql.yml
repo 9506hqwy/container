@@ -34,7 +34,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: redmine:5.1-suburl
+      image: localhost/redmine:5.1-suburl
       env:
         - name: REDMINE_DB_MYSQL
           value: 127.0.0.1
@@ -69,7 +69,7 @@ spec:
       workingDir: /usr/src/redmine
 
     - name: db
-      image: mysql:5.7
+      image: docker.io/mysql:8.0
       env:
         - name: MYSQL_USER
           valueFrom:
@@ -93,7 +93,7 @@ spec:
           subPath: configuration
 
     - name: cache
-      image: memcached:1.6-alpine
+      image: docker.io/memcached:1.6-alpine
       command:
         - memcached
 

@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
     - name: server
-      image: plantuml/plantuml-server:jetty-v1.2024.6
+      image: docker.io/plantuml/plantuml-server:jetty-v1.2024.6
       env:
         - name: BASE_URL
           value: plantuml

@@ -22,7 +22,7 @@ metadata:
 spec:
   containers:
     - name: server
-      image: ssh:alpine
+      image: localhost/ssh:alpine
       ports:
         - containerPort: 22
           hostPort: 20022

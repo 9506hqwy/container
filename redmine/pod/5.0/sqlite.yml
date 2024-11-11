@@ -16,7 +16,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: redmine:5.0-suburl
+      image: localhost/redmine:5.0-suburl
       env:
         - name: REDMINE_SUB_URL
           value: /redmine
@@ -39,7 +39,7 @@ spec:
       workingDir: /usr/src/redmine
 
     - name: cache
-      image: memcached:1.6-alpine
+      image: docker.io/memcached:1.6-alpine
       command:
         - memcached
 
