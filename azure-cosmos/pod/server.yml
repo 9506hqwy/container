@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: azure-cosmos
+spec:
+  containers:
+    - name: shell
+      image: python
+      command:
+        - tail
+        - -f
+        - /dev/null
+    - name: db
+      image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview
+      ports:
+        - containerPort: 1234
+          hostPort: 1234
+          protocol: tcp
+        - containerPort: 8081
+          hostPort: 8081
+          protocol: tcp
