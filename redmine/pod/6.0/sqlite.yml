@@ -18,7 +18,7 @@ spec:
     - name: web
       image: localhost/redmine:6.0-suburl
       env:
-        - name: REDMINE_SUB_URL
+        - name: RAILS_RELATIVE_URL_ROOT
           value: /redmine
         - name: MEMCACHED_SERVER
           value: 127.0.0.1

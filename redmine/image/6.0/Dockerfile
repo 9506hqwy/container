@@ -23,12 +23,12 @@ RUN set -eux; \
     \
     # サブ URL の設定
     { \
-        echo "map ENV['REDMINE_SUB_URL'] || '/' do"; \
+        echo "map ENV['RAILS_RELATIVE_URL_ROOT'] || '/' do"; \
         echo "  run Rails.application"; \
         echo "end"; \
     } >> config.ru; \
     \
-    echo "Redmine::Utils::relative_url_root = ENV['REDMINE_SUB_URL']" >> config/environment.rb; \
+    echo "Redmine::Utils::relative_url_root = ENV['RAILS_RELATIVE_URL_ROOT']" >> config/environment.rb; \
     \
     # Memcached の設定
     { \
@@ -37,6 +37,6 @@ RUN set -eux; \
         echo "end"; \
     } >> config/additional_environment.rb
 
-ENV REDMINE_SUB_URL=/redmine
-
-RUN ln -s /usr/src/redmine/public /usr/src/redmine/public${REDMINE_SUB_URL}
+# https://www.redmine.org/projects/redmine/wiki/HowTo_Install_Redmine_in_a_sub-URI
+# https://www.redmine.org/issues/41754
+ENV RAILS_RELATIVE_URL_ROOT=/redmine
