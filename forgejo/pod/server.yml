@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: forgejo-db-cred
+data:
+  username: ${DB_USER}
+  password: ${DB_PASSWORD}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: forgejo
+spec:
+  containers:
+    - name: web
+      image: codeberg.org/forgejo/forgejo:13
+      # https://codeberg.org/forgejo/forgejo/src/branch/v13.0/forgejo/custom/conf/app.example.ini
+      env:
+        - name: FORGEJO__database__DB_TYPE
+          value: postgres
+        - name: FORGEJO__database__HOST
+          value: 127.0.0.1:5432
+        - name: FORGEJO__database__NAME
+          value: forgejo
+        - name: FORGEJO__database__USER
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-db-cred
+              key: username
+        - name: FORGEJO__database__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-db-cred
+              key: password
+        # 初期設定で指定する。
+        #- name: FORGEJO____APP_NAME
+        #  value:
+        #- name: FORGEJO__cron.update_checker__ENABLED
+        #  value: false
+        - name: FORGEJO__server__DOMAIN
+          value: ${DOMAIN}
+        - name: FORGEJO__server__ROOT_URL
+          value: http://${FQDN}:3000/
+        - name: FORGEJO__server__DISABLE_SSH
+          value: true
+        - name: FORGEJO__server__OFFLINE_MODE
+          value: true
+        - name: FORGEJO__session__PROVIDER_CONFIG
+          value: 127.0.0.1:11211
+        - name: FORGEJO__session__PROVIDER
+          value: memcache
+        - name: FORGEJO__service__DISABLE_REGISTRATION
+          value: true
+        - name: FORGEJO__service__REQUIRE_SIGNIN_VIEW
+          value: true
+        - name: FORGEJO__service__REGISTER_EMAIL_CONFIRM
+          value: false
+        - name: FORGEJO__service__DEFAULT_KEEP_EMAIL_PRIVATE
+          value: true
+        - name: FORGEJO__mailer__ENABLED
+          value: false
+        - name: FORGEJO__openid__ENABLE_OPENID_SIGNIN
+          value: false
+        - name: FORGEJO__openid__ENABLE_OPENID_SIGNUP
+          value: false
+      ports:
+        - containerPort: 3000
+          hostPort: 3000
+          protocol: tcp
+      volumeMounts:
+        - name: forgejo-data
+          mountPath: /data:Z
+
+    - name: db
+      image: docker.io/postgres:17-alpine
+      env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-db-cred
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-db-cred
+              key: password
+        - name: POSTGRES_DB
+          value: forgejo
+      volumeMounts:
+        - name: forgejo-db
+          mountPath: /var/lib/postgresql/data:Z
+
+    - name: cache
+      image: docker.io/memcached:1.6-alpine
+      command:
+        - memcached
+
+  volumes:
+    - name: forgejo-data
+      hostPath:
+        path: ${HOST_PATH}/data
+
+    - name: forgejo-db
+      hostPath:
+        path: ${HOST_PATH}/db
