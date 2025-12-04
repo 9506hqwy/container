@@ -63,6 +63,10 @@ spec:
           value: false
         - name: FORGEJO__openid__ENABLE_OPENID_SIGNUP
           value: false
+        - name: FORGEJO__webhook__ALLOWED_HOST_LIST
+          value: private
+        - name: FORGEJO__webhook__SKIP_TLS_VERIFY
+          value: true
       ports:
         - containerPort: 3000
           hostPort: 3000
