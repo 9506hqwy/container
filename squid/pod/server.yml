@@ -22,6 +22,11 @@ data:
     http_access deny all
 
     http_port 3128
+
+    logfile_rotate 0
+    access_log stdio:/dev/stdout
+    cache_log stdio:/dev/stdout
+    cache_store_log stdio:/dev/stdout
 ---
 apiVersion: v1
 kind : Pod

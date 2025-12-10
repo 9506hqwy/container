@@ -1,12 +1,10 @@
-FROM redhat/ubi10-init:10.1-1763368398
+FROM redhat/ubi10-minimal:10.1-1764604111
 
 RUN set -eux; \
     \
-    sed -i /etc/dnf/plugins/subscription-manager.conf -e 's/^enabled=1/enabled=0/'; \
+    microdnf install -y squid --setopt install_weak_deps=0; \
     \
-    dnf update -y; \
-    dnf install -y squid; \
-    \
-    dnf clean all; \
-    \
-    systemctl enable squid
+    microdnf clean all
+
+ENTRYPOINT ["/usr/sbin/squid"]
+CMD ["-N"]
