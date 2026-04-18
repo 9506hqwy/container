@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rustfs-cred
+data:
+  access_key: ${RUSTFS_ACCESS_KEY}
+  secert_key: ${RUSTFS_SECRET_KEY}
+---
+apiVersion: v1
+kind : Pod
+metadata:
+  name: rustfs
+spec:
+  containers:
+    - name: web
+      image: docker.io/rustfs/rustfs
+      env:
+        - name: RUSTFS_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rustfs-cred
+              key: access_key
+        - name: RUSTFS_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rustfs-cred
+              key: secert_key
+        - name: RUSTFS_CONSOLE_ENABLE
+          value: true
+      ports:
+        - containerPort: 9000
+          hostPort: 9000
+          protocol: tcp
+        - containerPort: 9001
+          hostPort: 9001
+          protocol: tcp
+      volumeMounts:
+        - name: data
+          mountPath: /data:Z
+        - name: logs
+          mountPath: /logs:Z
+
+  volumes:
+    - name: data
+      hostPath:
+        path: ${HOST_PATH}/data
+
+    - name: logs
+      hostPath:
+        path: ${HOST_PATH}/logs
