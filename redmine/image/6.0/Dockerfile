@@ -6,21 +6,6 @@ COPY Gemfile.local Gemfile.local
 
 RUN set -eux; \
     \
-    savedAptMark="$(apt-mark showmanual)"; \
-    \
-    apt-get update; \
-    apt-get install -y --no-install-recommends build-essential=12.9; \
-    \
-    rm -rf /var/lib/apt/lists/*; \
-    \
-    # すべてのパッケージを自動に変更後にもとのパッケージを手動に変更して
-    # インストールしたパッケージを削除する。
-    apt-mark auto '.*' > /dev/null; \
-    [ -z "${savedAptMark}" ] || apt-mark manual ${savedAptMark}; \
-    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
-
-RUN set -eux; \
-    \
     # サブ URL の設定
     { \
         echo "map ENV['RAILS_RELATIVE_URL_ROOT'] || '/' do"; \
