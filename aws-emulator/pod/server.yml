@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aws-emulator
+spec:
+  containers:
+    - name: server
+      image: localhost/aws-emulator
+      ports:
+        - containerPort: 9297
+          hostPort: 9297
+          protocol: tcp
+      volumeMounts:
+        - name: emulator-config
+          mountPath: /home/emulator/.aws/emulator:Z
+  volumes:
+    - name: emulator-config
+      hostPath:
+        path: ${HOST_PATH}
